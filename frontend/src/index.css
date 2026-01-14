@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-shalom-lightGray text-gray-900 font-sans;
+  }
+}
+
+@layer components {
+  /* Botón Principal (Rojo) */
+  .btn-primary {
+    @apply bg-shalom-red text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-shalom-red focus:ring-offset-2;
+  }
+
+  /* Botón Secundario (Gris) */
+  .btn-secondary {
+    @apply bg-shalom-gray text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-shalom-gray focus:ring-offset-2;
+  }
+
+  /* Botón de Cancelar */
+  .btn-cancel {
+    @apply bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-400 transition-colors duration-200 focus:outline-none;
+  }
+
+  /* Input de Formulario */
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-shalom-red focus:border-transparent transition-colors duration-200;
+  }
+
+  /* Card/Tarjeta */
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+  }
+
+  /* Sidebar Item */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200 cursor-pointer;
+  }
+
+  .sidebar-item.active {
+    @apply bg-shalom-red text-white;
+  }
+}
+
+/* Estilos para Impresión */
+@media print {
+  body {
+    @apply bg-white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-ticket {
+    @apply max-w-sm mx-auto p-4;
+  }
+}
