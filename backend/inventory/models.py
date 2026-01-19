@@ -1,5 +1,6 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 
 
@@ -99,14 +100,24 @@ class StockMovement(models.Model):
         is_new = self.pk is None
         
         if is_new:
-            if self.movement_type == 'ENTRADA':
-                self.product.stock_quantity += self.quantity
-            elif self.movement_type == 'SALIDA':
-                self.product.stock_quantity -= self.quantity
-            elif self.movement_type == 'AJUSTE':
-                # El ajuste puede ser positivo o negativo
-                self.product.stock_quantity = self.quantity
-            
-            self.product.save()
-        
-        super().save(*args, **kwargs)
+            with transaction.atomic():
+                # Bloquear el producto para evitar condiciones de carrera
+                product = Product.objects.select_for_update().get(pk=self.product.pk)
+                
+                if self.movement_type == 'ENTRADA':
+                    product.stock_quantity += self.quantity
+                elif self.movement_type == 'SALIDA':
+                    new_stock = product.stock_quantity - self.quantity
+                    if new_stock < 0:
+                        raise ValidationError(
+                            f'Stock insuficiente. Stock actual: {product.stock_quantity}, '
+                            f'Cantidad solicitada: {self.quantity}'
+                        )
+                    product.stock_quantity = new_stock
+                elif self.movement_type == 'AJUSTE':
+                    if self.quantity < 0:
+                        raise ValidationError('El ajuste de stock no puede ser negativo')
+                    product.stock_quantity = self.quantity
+                
+                product.save()
+                super().save(*args, **kwargs)

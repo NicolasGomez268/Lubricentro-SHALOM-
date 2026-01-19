@@ -108,7 +108,7 @@ Shalom Car Service/
     └── package.json
 ```
 
-## 🔐 API Endpoints (Fase 1)
+## 🔐 API Endpoints
 
 ### Autenticación
 
@@ -120,9 +120,21 @@ Shalom Car Service/
 - `GET /api/auth/check/` - Verificar autenticación
 - `GET /api/auth/users/` - Lista de usuarios (Admin)
 
-## 📝 Estado Actual - Fase 1 ✅
+### Inventario
 
-### Completado
+- `GET /api/inventory/products/` - Listar productos (con paginación)
+- `POST /api/inventory/products/` - Crear producto (Admin)
+- `GET /api/inventory/products/{id}/` - Obtener producto
+- `PATCH /api/inventory/products/{id}/` - Actualizar producto (Admin)
+- `DELETE /api/inventory/products/{id}/` - Eliminar producto (Admin)
+- `GET /api/inventory/products/low_stock/` - Productos con stock bajo
+- `GET /api/inventory/products/categories/` - Listar categorías
+- `POST /api/inventory/products/{id}/adjust_stock/` - Ajustar stock (Admin)
+- `GET /api/inventory/movements/` - Historial de movimientos
+
+## 📝 Estado Actual del Proyecto
+
+### ✅ Fase 1: Autenticación y Base (COMPLETADA)
 
 - ✅ Configuración de VS Code
 - ✅ Modelo CustomUser con roles (Admin/Employee)
@@ -133,14 +145,33 @@ Shalom Car Service/
 - ✅ Dashboard básico para Admin y Empleado
 - ✅ Protección de rutas por roles
 
+### ✅ Fase 2: Inventario (COMPLETADA + MEJORAS)
+
+**Backend:**
+- ✅ Modelo de Productos (código, nombre, categoría, marca, stock, precios)
+- ✅ Modelo de Movimientos de Stock (entradas, salidas, ajustes)
+- ✅ Validaciones de stock negativo
+- ✅ Transacciones atómicas para evitar inconsistencias
+- ✅ Paginación automática (20 items por página)
+- ✅ Filtros y búsqueda avanzada
+- ✅ Cálculo automático de margen de ganancia
+- ✅ Alertas de stock bajo
+
+**Frontend:**
+- ✅ Gestión completa de productos (CRUD)
+- ✅ Búsqueda en tiempo real por código, nombre y marca
+- ✅ Filtros por categoría y estado de stock
+- ✅ Validaciones de formularios (cliente y servidor)
+- ✅ Ajuste de stock con validaciones
+- ✅ Historial de movimientos con filtros
+- ✅ Dashboard con estadísticas en tiempo real
+- ✅ Alertas visuales de stock bajo
+- ✅ Rankings de productos más valiosos y mejor margen
+- ✅ Interfaz responsive
+
 ## 🎯 Próximas Fases
 
-### Fase 2: Inventario
-- Gestión de productos (Aceites, Filtros)
-- Admin gestiona stock
-- Empleado consulta productos
-
-### Fase 3: CRM & Vehículos
+### Fase 3: CRM & Vehículos (EN DESARROLLO)
 - Registro de Clientes y Autos
 - Buscador por Patente
 - Historial de servicios

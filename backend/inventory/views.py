@@ -1,7 +1,9 @@
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from .models import Product, StockMovement
 from .serializers import (
     ProductSerializer,
@@ -9,6 +11,12 @@ from .serializers import (
     StockMovementSerializer,
     StockAdjustmentSerializer
 )
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 class IsAdminUser(permissions.BasePermission):
@@ -27,9 +35,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     queryset = Product.objects.all()
     permission_classes = [IsAdminUser]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['code', 'name', 'brand']
-    ordering_fields = ['name', 'stock_quantity', 'sale_price', 'created_at']
+    search_fields = ['code', 'name', 'brand', 'description']
+    ordering_fields = ['name', 'stock_quantity', 'sale_price', 'created_at', 'category']
     ordering = ['-created_at']
     
     def get_serializer_class(self):
@@ -83,20 +92,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = StockAdjustmentSerializer(data=request.data)
         
         if serializer.is_valid():
-            movement = StockMovement.objects.create(
-                product=product,
-                movement_type=serializer.validated_data['movement_type'],
-                quantity=serializer.validated_data['quantity'],
-                reason=serializer.validated_data.get('reason', ''),
-                reference=serializer.validated_data.get('reference', ''),
-                performed_by=request.user
-            )
-            
-            return Response({
-                'message': 'Stock ajustado correctamente',
-                'new_stock': product.stock_quantity,
-                'movement': StockMovementSerializer(movement).data
-            })
+            try:
+                movement = StockMovement.objects.create(
+                    product=product,
+                    movement_type=serializer.validated_data['movement_type'],
+                    quantity=serializer.validated_data['quantity'],
+                    reason=serializer.validated_data.get('reason', ''),
+                    reference=serializer.validated_data.get('reference', ''),
+                    performed_by=request.user
+                )
+                
+                return Response({
+                    'message': 'Stock ajustado correctamente',
+                    'new_stock': product.stock_quantity,
+                    'movement': StockMovementSerializer(movement).data
+                })
+            except ValidationError as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

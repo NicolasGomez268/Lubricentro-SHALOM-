@@ -5,6 +5,7 @@ import { inventoryService } from '../../services/inventoryService';
 const ProductModal = ({ product, onClose }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -53,10 +54,45 @@ const ProductModal = ({ product, onClose }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    // Limpiar error del campo al cambiar
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.code.trim()) {
+      newErrors.code = 'El código es obligatorio';
+    }
+    if (!formData.name.trim()) {
+      newErrors.name = 'El nombre es obligatorio';
+    }
+    if (parseFloat(formData.purchase_price) <= 0) {
+      newErrors.purchase_price = 'El precio de compra debe ser mayor a 0';
+    }
+    if (parseFloat(formData.sale_price) <= 0) {
+      newErrors.sale_price = 'El precio de venta debe ser mayor a 0';
+    }
+    if (parseFloat(formData.sale_price) < parseFloat(formData.purchase_price)) {
+      newErrors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
+    }
+    if (parseInt(formData.stock_quantity) < 0) {
+      newErrors.stock_quantity = 'La cantidad no puede ser negativa';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -68,7 +104,18 @@ const ProductModal = ({ product, onClose }) => {
       onClose();
     } catch (error) {
       console.error('Error al guardar producto:', error);
-      alert('Error al guardar el producto');
+      if (error.response?.data) {
+        // Mapear errores del backend
+        const backendErrors = {};
+        Object.keys(error.response.data).forEach(key => {
+          backendErrors[key] = Array.isArray(error.response.data[key]) 
+            ? error.response.data[key][0] 
+            : error.response.data[key];
+        });
+        setErrors(backendErrors);
+      } else {
+        alert('Error al guardar el producto. Por favor, verifica los datos.');
+      }
     } finally {
       setLoading(false);
     }
@@ -102,9 +149,10 @@ const ProductModal = ({ product, onClose }) => {
                   name="code"
                   value={formData.code}
                   onChange={handleChange}
-                  className="input-field"
+                  className={`input-field ${errors.code ? 'border-red-500' : ''}`}
                   required
                 />
+                {errors.code && <p className="text-red-500 text-sm mt-1">{errors.code}</p>}
               </div>
 
               <div>
@@ -116,9 +164,10 @@ const ProductModal = ({ product, onClose }) => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="input-field"
+                  className={`input-field ${errors.name ? 'border-red-500' : ''}`}
                   required
                 />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
 
               <div>
@@ -186,9 +235,10 @@ const ProductModal = ({ product, onClose }) => {
                   value={formData.stock_quantity}
                   onChange={handleChange}
                   min="0"
-                  className="input-field"
+                  className={`input-field ${errors.stock_quantity ? 'border-red-500' : ''}`}
                   required
                 />
+                {errors.stock_quantity && <p className="text-red-500 text-sm mt-1">{errors.stock_quantity}</p>}
               </div>
 
               <div>
@@ -242,10 +292,11 @@ const ProductModal = ({ product, onClose }) => {
                     onChange={handleChange}
                     min="0"
                     step="0.01"
-                    className="input-field pl-8"
+                    className={`input-field pl-8 ${errors.purchase_price ? 'border-red-500' : ''}`}
                     required
                   />
                 </div>
+                {errors.purchase_price && <p className="text-red-500 text-sm mt-1">{errors.purchase_price}</p>}
               </div>
 
               <div>
@@ -261,10 +312,11 @@ const ProductModal = ({ product, onClose }) => {
                     onChange={handleChange}
                     min="0"
                     step="0.01"
-                    className="input-field pl-8"
+                    className={`input-field pl-8 ${errors.sale_price ? 'border-red-500' : ''}`}
                     required
                   />
                 </div>
+                {errors.sale_price && <p className="text-red-500 text-sm mt-1">{errors.sale_price}</p>}
               </div>
             </div>
           </div>

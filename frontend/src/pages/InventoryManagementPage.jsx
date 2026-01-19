@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowUpDown, Edit2, Package, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Edit2, Filter, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ProductModal from '../components/inventory/ProductModal';
 import StockAdjustmentModal from '../components/inventory/StockAdjustmentModal';
@@ -6,14 +6,51 @@ import { inventoryService } from '../services/inventoryService';
 
 const InventoryManagementPage = () => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [stockFilter, setStockFilter] = useState('ALL');
 
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [products, searchTerm, categoryFilter, stockFilter]);
+
+  const applyFilters = () => {
+    let filtered = [...products];
+
+    // Filtro de búsqueda
+    if (searchTerm) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Filtro de categoría
+    if (categoryFilter !== 'ALL') {
+      filtered = filtered.filter(p => p.category === categoryFilter);
+    }
+
+    // Filtro de stock
+    if (stockFilter === 'LOW') {
+      filtered = filtered.filter(p => p.is_low_stock);
+    } else if (stockFilter === 'AVAILABLE') {
+      filtered = filtered.filter(p => p.stock_quantity > p.min_stock);
+    } else if (stockFilter === 'OUT') {
+      filtered = filtered.filter(p => p.stock_quantity === 0);
+    }
+
+    setFilteredProducts(filtered);
+  };
 
   const loadProducts = async () => {
     try {
@@ -38,13 +75,14 @@ const InventoryManagementPage = () => {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (confirm('¿Estás seguro de eliminar este producto?')) {
+    const product = products.find(p => p.id === productId);
+    if (window.confirm(`¿Estás seguro de eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.`)) {
       try {
         await inventoryService.deleteProduct(productId);
-        loadProducts();
+        setProducts(products.filter(p => p.id !== productId));
       } catch (error) {
         console.error('Error al eliminar producto:', error);
-        alert('Error al eliminar el producto');
+        alert('Error al eliminar el producto. Intenta nuevamente.');
       }
     }
   };
@@ -83,6 +121,68 @@ const InventoryManagementPage = () => {
           <Plus className="w-5 h-5" />
           Nuevo Producto
         </button>
+      </div>
+
+      {/* Filtros y Búsqueda */}
+      <div className="card">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Búsqueda */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Search className="w-4 h-4 inline mr-2" />
+              Buscar Producto
+            </label>
+            <input
+              type="text"
+              placeholder="Buscar por código, nombre o marca..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field"
+            />
+          </div>
+
+          {/* Filtro de Categoría */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Filter className="w-4 h-4 inline mr-2" />
+              Categoría
+            </label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="input-field"
+            >
+              <option value="ALL">Todas</option>
+              <option value="ACEITE">Aceite</option>
+              <option value="FILTRO_AIRE">Filtro de Aire</option>
+              <option value="FILTRO_ACEITE">Filtro de Aceite</option>
+              <option value="FILTRO_COMBUSTIBLE">Filtro de Combustible</option>
+              <option value="OTROS">Otros</option>
+            </select>
+          </div>
+
+          {/* Filtro de Stock */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Stock
+            </label>
+            <select
+              value={stockFilter}
+              onChange={(e) => setStockFilter(e.target.value)}
+              className="input-field"
+            >
+              <option value="ALL">Todos</option>
+              <option value="AVAILABLE">Disponible</option>
+              <option value="LOW">Stock Bajo</option>
+              <option value="OUT">Agotado</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Contador de resultados */}
+        <div className="mt-4 text-sm text-gray-600">
+          Mostrando {filteredProducts.length} de {products.length} productos
+        </div>
       </div>
 
       {/* Stats */}
@@ -144,13 +244,19 @@ const InventoryManagementPage = () => {
       <div className="card">
         <h2 className="text-xl font-bold text-shalom-gray mb-4">Productos</h2>
 
-        {products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>No hay productos registrados</p>
-            <button onClick={handleCreateProduct} className="btn-primary mt-4">
-              Crear Primer Producto
-            </button>
+            {products.length === 0 ? (
+              <>
+                <p>No hay productos registrados</p>
+                <button onClick={handleCreateProduct} className="btn-primary mt-4">
+                  Crear Primer Producto
+                </button>
+              </>
+            ) : (
+              <p>No se encontraron productos con los filtros aplicados</p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -184,7 +290,7 @@ const InventoryManagementPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {product.code}
