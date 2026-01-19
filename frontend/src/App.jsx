@@ -3,10 +3,13 @@ import DashboardLayout from './components/layouts/DashboardLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 import AdminDashboard from './pages/AdminDashboard'
+import CustomerManagementPage from './pages/CustomerManagementPage'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import InventoryManagementPage from './pages/InventoryManagementPage'
 import LoginPage from './pages/LoginPage'
 import StockPage from './pages/StockPage'
+import VehicleManagementPage from './pages/VehicleManagementPage'
+import VehicleSearchPage from './pages/VehicleSearchPage'
 
 function App() {
   return (
@@ -23,6 +26,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<EmployeeDashboard />} />
             <Route path="stock" element={<StockPage />} />
+            <Route path="vehicles" element={<VehicleSearchPage />} />
             <Route path="admin" element={
               <ProtectedRoute requireAdmin>
                 <AdminDashboard />
@@ -31,6 +35,16 @@ function App() {
             <Route path="admin/inventory" element={
               <ProtectedRoute requireAdmin>
                 <InventoryManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/customers" element={
+              <ProtectedRoute requireAdmin>
+                <CustomerManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/vehicles" element={
+              <ProtectedRoute requireAdmin>
+                <VehicleManagementPage />
               </ProtectedRoute>
             } />
           </Route>

@@ -1,5 +1,6 @@
 import { AlertCircle, ArrowUpDown, Edit2, Filter, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import ProductModal from '../components/inventory/ProductModal';
 import StockAdjustmentModal from '../components/inventory/StockAdjustmentModal';
 import { inventoryService } from '../services/inventoryService';
@@ -14,6 +15,7 @@ const InventoryManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [stockFilter, setStockFilter] = useState('ALL');
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, productId: null, productName: '' });
 
   useEffect(() => {
     loadProducts();
@@ -74,16 +76,24 @@ const InventoryManagementPage = () => {
     setShowProductModal(true);
   };
 
-  const handleDeleteProduct = async (productId) => {
+  const handleDeleteProduct = (productId) => {
     const product = products.find(p => p.id === productId);
-    if (window.confirm(`¿Estás seguro de eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.`)) {
-      try {
-        await inventoryService.deleteProduct(productId);
-        setProducts(products.filter(p => p.id !== productId));
-      } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        alert('Error al eliminar el producto. Intenta nuevamente.');
-      }
+    setDeleteConfirm({ 
+      isOpen: true, 
+      productId, 
+      productName: product?.name || '' 
+    });
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await inventoryService.deleteProduct(deleteConfirm.productId);
+      setProducts(products.filter(p => p.id !== deleteConfirm.productId));
+      setDeleteConfirm({ isOpen: false, productId: null, productName: '' });
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      alert('Error al eliminar el producto. Intenta nuevamente.');
+      setDeleteConfirm({ isOpen: false, productId: null, productName: '' });
     }
   };
 
@@ -370,6 +380,18 @@ const InventoryManagementPage = () => {
           onClose={handleModalClose}
         />
       )}
+
+      {/* Modal de Confirmación */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Eliminar Producto"
+        message={`¿Estás seguro de eliminar "${deleteConfirm.productName}"? Esta acción no se puede deshacer.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ isOpen: false, productId: null, productName: '' })}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        danger={true}
+      />
     </div>
   );
 };

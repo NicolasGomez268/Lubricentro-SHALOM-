@@ -16,7 +16,7 @@ const Sidebar = () => {
 
   const employeeMenuItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Panel Principal' },
-    { to: '/vehicles', icon: Car, label: 'Vehículos' },
+    { to: '/vehicles', icon: Car, label: 'Búsqueda de Vehículos' },
     { to: '/orders', icon: FileText, label: 'Órdenes de Servicio' },
     { to: '/stock', icon: Package, label: 'Consultar Stock' },
   ];
@@ -24,7 +24,8 @@ const Sidebar = () => {
   const adminMenuItems = [
     { to: '/admin', icon: BarChart3, label: 'Dashboard Admin' },
     { to: '/admin/inventory', icon: Package, label: 'Gestión de Stock' },
-    { to: '/admin/clients', icon: Users, label: 'Clientes' },
+    { to: '/admin/customers', icon: Users, label: 'Clientes' },
+    { to: '/admin/vehicles', icon: Car, label: 'Vehículos' },
     { to: '/admin/reports', icon: FileText, label: 'Reportes' },
     { to: '/admin/settings', icon: Settings, label: 'Configuración' },
   ];
