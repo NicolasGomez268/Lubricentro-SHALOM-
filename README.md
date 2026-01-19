@@ -132,6 +132,32 @@ Shalom Car Service/
 - `POST /api/inventory/products/{id}/adjust_stock/` - Ajustar stock (Admin)
 - `GET /api/inventory/movements/` - Historial de movimientos
 
+### CRM
+
+- `GET /api/crm/customers/` - Listar clientes (con paginación)
+- `POST /api/crm/customers/` - Crear cliente
+- `GET /api/crm/customers/{id}/` - Obtener cliente
+- `PATCH /api/crm/customers/{id}/` - Actualizar cliente
+- `DELETE /api/crm/customers/{id}/` - Eliminar cliente
+- `GET /api/crm/vehicles/` - Listar vehículos (con paginación)
+- `POST /api/crm/vehicles/` - Crear vehículo
+- `GET /api/crm/vehicles/{id}/` - Obtener vehículo
+- `PATCH /api/crm/vehicles/{id}/` - Actualizar vehículo
+- `DELETE /api/crm/vehicles/{id}/` - Eliminar vehículo
+- `GET /api/crm/vehicles/search_by_plate/` - Buscar por patente
+- `POST /api/crm/vehicles/{id}/update_mileage/` - Actualizar kilometraje
+
+### Órdenes de Servicio
+
+- `GET /api/services/orders/` - Listar órdenes (con paginación y filtros)
+- `POST /api/services/orders/` - Crear orden
+- `GET /api/services/orders/{id}/` - Obtener orden
+- `PATCH /api/services/orders/{id}/` - Actualizar orden
+- `DELETE /api/services/orders/{id}/` - Eliminar orden
+- `POST /api/services/orders/{id}/complete/` - Completar orden y descontar stock
+- `POST /api/services/orders/{id}/cancel/` - Cancelar orden
+- `GET /api/services/orders/statistics/` - Estadísticas de órdenes
+
 ## 📝 Estado Actual del Proyecto
 
 ### ✅ Fase 1: Autenticación y Base (COMPLETADA)
@@ -169,22 +195,59 @@ Shalom Car Service/
 - ✅ Rankings de productos más valiosos y mejor margen
 - ✅ Interfaz responsive
 
+### ✅ Fase 3: CRM & Vehículos (COMPLETADA)
+
+**Backend:**
+- ✅ Modelo de Clientes con validaciones (teléfono, email)
+- ✅ Modelo de Vehículos con validación de patente argentina
+- ✅ Relaciones Cliente-Vehículo (1 a muchos)
+- ✅ Búsqueda por patente optimizada
+- ✅ Actualización de kilometraje
+- ✅ Estadísticas de clientes y vehículos
+
+**Frontend:**
+- ✅ Gestión de clientes (CRUD) con búsqueda
+- ✅ Gestión de vehículos (CRUD) con filtros
+- ✅ Página de búsqueda por patente para empleados
+- ✅ Modales de confirmación personalizados (ConfirmDialog)
+- ✅ Validaciones de patente y teléfono
+- ✅ Interfaz responsive y profesional
+
+### ✅ Fase 4: Órdenes de Servicio (COMPLETADA)
+
+**Backend:**
+- ✅ Modelo ServiceOrder con numeración automática (OS-00001)
+- ✅ Modelo ServiceItem (productos y servicios)
+- ✅ Estados: PENDING, COMPLETED, CANCELLED
+- ✅ Descuento automático de stock al completar
+- ✅ Registro de movimientos de stock
+- ✅ Validación de stock suficiente
+- ✅ Cálculo automático de totales
+- ✅ Filtros por estado, patente y cliente
+- ✅ Estadísticas de órdenes e ingresos
+
+**Frontend:**
+- ✅ Página de creación de orden (ServiceOrderPage)
+  * Búsqueda de vehículo por patente
+  * Agregar productos y servicios
+  * Cálculo automático de totales
+  * Vista previa e impresión
+- ✅ Página de historial (ServiceOrderListPage)
+  * Lista de todas las órdenes
+  * Filtros por estado y patente
+  * Modal de detalle completo
+  * Acciones: completar, cancelar, imprimir
+- ✅ Integración en Dashboard con estadísticas
+- ✅ Menú de navegación actualizado
+- ✅ Sistema de impresión para órdenes
+
 ## 🎯 Próximas Fases
 
-### Fase 3: CRM & Vehículos (EN DESARROLLO)
-- Registro de Clientes y Autos
-- Buscador por Patente
-- Historial de servicios
-
-### Fase 4: Órdenes de Trabajo
-- Formulario de servicio completo
-- Descuento automático de stock
-- Sistema de impresión Wi-Fi
-
-### Fase 5: Dashboard & Métricas
-- Métricas financieras
-- Reportes mensuales
+### Fase 5: Dashboard & Métricas Avanzadas
+- Métricas financieras detalladas
+- Reportes mensuales exportables
 - Gráficos de rendimiento
+- Análisis de productos más vendidos
 
 ## 🛠️ Tecnologías y Librerías
 

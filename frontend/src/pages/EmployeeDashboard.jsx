@@ -1,11 +1,14 @@
-import { Car, Package } from 'lucide-react';
-import { useEffect } from 'react';
+import { Car, FileText, Package } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import StatCard from '../components/common/StatCard';
 import { useAuth } from '../context/AuthContext';
+import { getServiceStatistics } from '../services/serviceOrderService';
 
 const EmployeeDashboard = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [serviceStats, setServiceStats] = useState(null);
 
   // Si es admin, redirigir al dashboard de admin
   useEffect(() => {
@@ -14,26 +17,19 @@ const EmployeeDashboard = () => {
     }
   }, [isAdmin, navigate]);
 
-  const stats = [
-    {
-      title: 'Órdenes Hoy',
-      value: '0',
-      icon: Car,
-      color: 'bg-blue-500',
-    },
-    {
-      title: 'Vehículos Registrados',
-      value: '0',
-      icon: Car,
-      color: 'bg-green-500',
-    },
-    {
-      title: 'Stock Bajo',
-      value: '0',
-      icon: Package,
-      color: 'bg-shalom-red',
-    },
-  ];
+  // Cargar estadísticas de órdenes
+  useEffect(() => {
+    loadServiceStats();
+  }, []);
+
+  const loadServiceStats = async () => {
+    try {
+      const response = await getServiceStatistics();
+      setServiceStats(response.data);
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -44,36 +40,59 @@ const EmployeeDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-shalom-gray">{stat.value}</p>
-              </div>
-              <div className={`${stat.color} p-4 rounded-lg`}>
-                <stat.icon className="w-8 h-8 text-white" />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard
+          title="Órdenes Pendientes"
+          value={serviceStats?.pending || 0}
+          icon={FileText}
+          color="bg-yellow-500"
+        />
+        <StatCard
+          title="Órdenes Completadas"
+          value={serviceStats?.completed || 0}
+          icon={FileText}
+          color="bg-green-500"
+        />
+        <StatCard
+          title="Total Órdenes"
+          value={serviceStats?.total_orders || 0}
+          icon={Car}
+          color="bg-blue-500"
+        />
+        <StatCard
+          title="Ingresos Totales"
+          value={`$${serviceStats?.total_revenue?.toFixed(2) || '0.00'}`}
+          icon={Package}
+          color="bg-purple-500"
+        />
       </div>
 
       {/* Quick Actions */}
       <div className="card">
         <h2 className="text-xl font-bold text-shalom-gray mb-4">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button className="btn-primary py-4 text-lg">
+          <button 
+            onClick={() => navigate('/service-order')}
+            className="btn-primary py-4 text-lg"
+          >
             Nueva Orden de Servicio
           </button>
-          <button className="btn-secondary py-4 text-lg">
+          <button 
+            onClick={() => navigate('/vehicles')}
+            className="btn-secondary py-4 text-lg"
+          >
             Buscar Vehículo
           </button>
-          <button className="btn-secondary py-4 text-lg">
-            Registrar Cliente
+          <button 
+            onClick={() => navigate('/service-orders')}
+            className="btn-secondary py-4 text-lg"
+          >
+            Ver Historial de Órdenes
           </button>
-          <button className="btn-secondary py-4 text-lg">
+          <button 
+            onClick={() => navigate('/stock')}
+            className="btn-secondary py-4 text-lg"
+          >
             Consultar Stock
           </button>
         </div>
@@ -92,3 +111,4 @@ const EmployeeDashboard = () => {
 };
 
 export default EmployeeDashboard;
+

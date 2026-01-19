@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'accounts',
     'inventory',
     'crm',
+    'services',
 ]
 
 MIDDLEWARE = [

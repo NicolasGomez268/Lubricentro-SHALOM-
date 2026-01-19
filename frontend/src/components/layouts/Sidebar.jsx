@@ -17,7 +17,8 @@ const Sidebar = () => {
   const employeeMenuItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Panel Principal' },
     { to: '/vehicles', icon: Car, label: 'Búsqueda de Vehículos' },
-    { to: '/orders', icon: FileText, label: 'Órdenes de Servicio' },
+    { to: '/service-order', icon: Wrench, label: 'Nueva Orden' },
+    { to: '/service-orders', icon: FileText, label: 'Historial de Órdenes' },
     { to: '/stock', icon: Package, label: 'Consultar Stock' },
   ];
 
