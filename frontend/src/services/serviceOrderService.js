@@ -39,3 +39,13 @@ export const cancelServiceOrder = (id) => {
 export const getServiceStatistics = () => {
   return api.get('/services/orders/statistics/');
 };
+
+// Obtener historial de órdenes por vehículo
+export const getVehicleOrderHistory = (vehicleId) => {
+  return api.get(`/services/orders/by_vehicle/?vehicle_id=${vehicleId}`);
+};
+
+// Actualizar una orden pendiente (solo items y observaciones)
+export const updatePendingOrder = (id, data) => {
+  return api.patch(`/services/orders/${id}/`, data);
+};

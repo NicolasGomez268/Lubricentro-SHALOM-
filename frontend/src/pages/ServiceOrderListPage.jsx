@@ -1,6 +1,7 @@
 import {
     AlertCircle,
     CheckCircle,
+    Edit2,
     Eye,
     Filter,
     Printer,
@@ -9,10 +10,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import EditOrderModal from '../components/services/EditOrderModal';
 import {
     cancelServiceOrder,
     completeServiceOrder,
-    getServiceOrders
+    getServiceOrders,
+    updatePendingOrder
 } from '../services/serviceOrderService';
 
 export default function ServiceOrderListPage() {
@@ -22,6 +25,7 @@ export default function ServiceOrderListPage() {
   const [searchPlate, setSearchPlate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, orderId: null, action: null });
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
@@ -83,6 +87,24 @@ export default function ServiceOrderListPage() {
   const viewDetail = (order) => {
     setSelectedOrder(order);
     setShowDetail(true);
+  };
+
+  const openEditModal = (order) => {
+    setSelectedOrder(order);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (orderId, data) => {
+    try {
+      await updatePendingOrder(orderId, data);
+      showNotification('success', 'Orden actualizada exitosamente');
+      loadOrders();
+      setShowEditModal(false);
+    } catch (error) {
+      const errorMessage = error.message || error.response?.data?.detail || 'Error al actualizar la orden';
+      showNotification('error', errorMessage);
+      throw error;
+    }
   };
 
   const printOrder = (order) => {
@@ -277,6 +299,13 @@ export default function ServiceOrderListPage() {
                         {order.status === 'PENDING' && (
                           <>
                             <button
+                              onClick={() => openEditModal(order)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                              title="Editar"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
                               onClick={() => setConfirmAction({ isOpen: true, orderId: order.id, action: 'complete' })}
                               className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
                               title="Completar"
@@ -433,6 +462,14 @@ export default function ServiceOrderListPage() {
         onCancel={() => setConfirmAction({ isOpen: false, orderId: null, action: null })}
         confirmText={confirmAction.action === 'complete' ? 'Completar' : 'Cancelar Orden'}
         danger={confirmAction.action === 'cancel'}
+      />
+
+      {/* Modal de edición */}
+      <EditOrderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        order={selectedOrder}
+        onSave={handleSaveEdit}
       />
 
       {/* Notificación Toast */}

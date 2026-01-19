@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import ServiceOrderListPage from './pages/ServiceOrderListPage'
 import ServiceOrderPage from './pages/ServiceOrderPage'
 import StockPage from './pages/StockPage'
+import VehicleHistoryPage from './pages/VehicleHistoryPage'
 import VehicleManagementPage from './pages/VehicleManagementPage'
 import VehicleSearchPage from './pages/VehicleSearchPage'
 
@@ -29,6 +30,7 @@ function App() {
             <Route path="dashboard" element={<EmployeeDashboard />} />
             <Route path="stock" element={<StockPage />} />
             <Route path="vehicles" element={<VehicleSearchPage />} />
+            <Route path="vehicles/:vehicleId/history" element={<VehicleHistoryPage />} />
             <Route path="service-order" element={<ServiceOrderPage />} />
             <Route path="service-orders" element={<ServiceOrderListPage />} />
             <Route path="admin" element={

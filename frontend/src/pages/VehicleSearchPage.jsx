@@ -1,5 +1,6 @@
-import { Calendar, Car, Gauge, Mail, MapPin, Phone, Search, User } from 'lucide-react';
+import { Calendar, Car, Gauge, History, Mail, MapPin, Phone, Search, User } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import crmService from '../services/crmService';
 
 export default function VehicleSearchPage() {
@@ -7,6 +8,7 @@ export default function VehicleSearchPage() {
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -168,6 +170,17 @@ export default function VehicleSearchPage() {
                                     <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{vehicle.notes}</p>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Botón para ver historial */}
+                        <div className="mt-6 pt-6 border-t">
+                            <button
+                                onClick={() => navigate(`/vehicles/${vehicle.id}/history`)}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                                <History size={20} />
+                                Ver Historial Completo
+                            </button>
                         </div>
                     </div>
 

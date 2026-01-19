@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.utils import timezone
 from .models import ServiceOrder, ServiceItem
-from .serializers import ServiceOrderSerializer, ServiceOrderCreateSerializer
+from .serializers import ServiceOrderSerializer, ServiceOrderCreateSerializer, ServiceOrderUpdateSerializer
 from inventory.models import Product, StockMovement
 
 
@@ -23,6 +23,8 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return ServiceOrderCreateSerializer
+        elif self.action == 'update' or self.action == 'partial_update':
+            return ServiceOrderUpdateSerializer
         return ServiceOrderSerializer
     
     def get_queryset(self):
@@ -161,5 +163,44 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             'completed': completed,
             'cancelled': cancelled,
             'total_revenue': float(total_revenue)
+        })
+    
+    @action(detail=False, methods=['get'])
+    def by_vehicle(self, request):
+        """
+        Obtiene el historial completo de órdenes de un vehículo.
+        """
+        from django.db.models import Sum, Count
+        
+        vehicle_id = request.query_params.get('vehicle_id', None)
+        
+        if not vehicle_id:
+            return Response(
+                {'error': 'Debe proporcionar un vehicle_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Obtener todas las órdenes del vehículo
+        orders = ServiceOrder.objects.filter(
+            vehicle_id=vehicle_id
+        ).select_related('vehicle', 'customer', 'created_by').prefetch_related('items__product').order_by('-created_at')
+        
+        # Calcular estadísticas
+        stats = {
+            'total_orders': orders.count(),
+            'completed_orders': orders.filter(status='COMPLETED').count(),
+            'pending_orders': orders.filter(status='PENDING').count(),
+            'total_spent': float(orders.filter(status='COMPLETED').aggregate(
+                total=Sum('total')
+            )['total'] or 0),
+            'last_visit': orders.first().created_at if orders.exists() else None,
+        }
+        
+        # Serializar órdenes
+        serializer = ServiceOrderSerializer(orders, many=True)
+        
+        return Response({
+            'statistics': stats,
+            'orders': serializer.data
         })
 
