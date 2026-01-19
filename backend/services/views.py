@@ -72,14 +72,14 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
                 for item in service_order.items.filter(item_type='PRODUCT', product__isnull=False):
                     product = Product.objects.select_for_update().get(pk=item.product.id)
                     
-                    if product.stock < item.quantity:
+                    if product.stock_quantity < item.quantity:
                         raise ValueError(
                             f'Stock insuficiente para {product.name}. '
-                            f'Disponible: {product.stock}, Requerido: {item.quantity}'
+                            f'Disponible: {product.stock_quantity}, Requerido: {item.quantity}'
                         )
                     
                     # Actualizar stock
-                    product.stock -= item.quantity
+                    product.stock_quantity -= item.quantity
                     product.save()
                     
                     # Registrar movimiento de stock

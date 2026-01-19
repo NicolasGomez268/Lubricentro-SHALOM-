@@ -1,5 +1,7 @@
 import {
+    AlertCircle,
     ArrowLeft,
+    CheckCircle,
     Package,
     Printer,
     Save,
@@ -8,11 +10,13 @@ import {
     Wrench
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getVehicles } from '../services/crmService';
-import { getProducts } from '../services/inventoryService';
+import { inventoryService } from '../services/inventoryService';
 import { createServiceOrder } from '../services/serviceOrderService';
 
 export default function ServiceOrderPage() {
+  const navigate = useNavigate();
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicles, setVehicles] = useState([]);
@@ -22,6 +26,7 @@ export default function ServiceOrderPage() {
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -30,8 +35,7 @@ export default function ServiceOrderPage() {
 
   const loadProducts = async () => {
     try {
-      const response = await getProducts();
-      const productsList = response.data.results || response.data;
+      const productsList = await inventoryService.getProducts();
       setProducts(Array.isArray(productsList) ? productsList : []);
     } catch (error) {
       console.error('Error al cargar productos:', error);
@@ -45,8 +49,8 @@ export default function ServiceOrderPage() {
     
     try {
       setLoading(true);
-      const response = await getVehicles({ plate: vehicleSearch });
-      const vehiclesList = response.data.results || response.data;
+      const data = await getVehicles({ plate: vehicleSearch });
+      const vehiclesList = data.results || data;
       setSearchResults(Array.isArray(vehiclesList) ? vehiclesList : []);
       setShowResults(true);
     } catch (error) {
@@ -67,6 +71,13 @@ export default function ServiceOrderPage() {
     setSelectedVehicle(null);
     setVehicleSearch('');
     setSearchResults([]);
+  };
+
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    setTimeout(() => {
+      setNotification({ show: false, type: '', message: '' });
+    }, 3000);
   };
 
   // Agregar item (producto o servicio)
@@ -120,12 +131,12 @@ export default function ServiceOrderPage() {
   // Guardar orden
   const saveOrder = async () => {
     if (!selectedVehicle) {
-      alert('Debe seleccionar un vehículo');
+      showNotification('error', 'Debe seleccionar un vehículo');
       return;
     }
 
     if (items.length === 0) {
-      alert('Debe agregar al menos un item');
+      showNotification('error', 'Debe agregar al menos un item');
       return;
     }
 
@@ -144,17 +155,17 @@ export default function ServiceOrderPage() {
         }))
       };
 
-      await createServiceOrder(orderData);
-      alert('Orden creada exitosamente');
+      const response = await createServiceOrder(orderData);
+      showNotification('success', 'Orden creada exitosamente');
       
-      // Limpiar formulario
-      clearVehicle();
-      setObservations('');
-      setItems([]);
+      // Redirigir al historial después de 1.5 segundos
+      setTimeout(() => {
+        navigate('/service-orders');
+      }, 1500);
       
     } catch (error) {
       console.error('Error al crear orden:', error);
-      alert(error.response?.data?.detail || 'Error al crear la orden');
+      showNotification('error', error.response?.data?.detail || 'Error al crear la orden');
     } finally {
       setLoading(false);
     }
@@ -463,6 +474,24 @@ export default function ServiceOrderPage() {
             <Save size={20} />
             Guardar Orden
           </button>
+        </div>
+      )}
+
+      {/* Notificación Toast */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg ${
+            notification.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckCircle size={24} />
+            ) : (
+              <AlertCircle size={24} />
+            )}
+            <span className="font-medium">{notification.message}</span>
+          </div>
         </div>
       )}
     </div>

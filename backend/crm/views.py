@@ -103,6 +103,11 @@ class VehicleViewSet(viewsets.ModelViewSet):
         """
         queryset = Vehicle.objects.select_related('customer')
         
+        # Búsqueda por patente específica
+        plate = self.request.query_params.get('plate', None)
+        if plate:
+            queryset = queryset.filter(plate__icontains=plate)
+        
         # Búsqueda por patente, marca, modelo
         search = self.request.query_params.get('search', None)
         if search:

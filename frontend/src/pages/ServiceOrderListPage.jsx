@@ -1,4 +1,5 @@
 import {
+    AlertCircle,
     CheckCircle,
     Eye,
     Filter,
@@ -22,6 +23,7 @@ export default function ServiceOrderListPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, orderId: null, action: null });
+  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   useEffect(() => {
     loadOrders();
@@ -45,14 +47,21 @@ export default function ServiceOrderListPage() {
     }
   };
 
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    setTimeout(() => {
+      setNotification({ show: false, type: '', message: '' });
+    }, 3000);
+  };
+
   const handleComplete = async () => {
     try {
       await completeServiceOrder(confirmAction.orderId);
-      alert('Orden completada exitosamente. El stock ha sido descontado.');
+      showNotification('success', 'Orden completada exitosamente. El stock ha sido descontado.');
       loadOrders();
       setShowDetail(false);
     } catch (error) {
-      alert(error.response?.data?.detail || 'Error al completar la orden');
+      showNotification('error', error.response?.data?.detail || 'Error al completar la orden');
     } finally {
       setConfirmAction({ isOpen: false, orderId: null, action: null });
     }
@@ -61,11 +70,11 @@ export default function ServiceOrderListPage() {
   const handleCancel = async () => {
     try {
       await cancelServiceOrder(confirmAction.orderId);
-      alert('Orden cancelada exitosamente');
+      showNotification('success', 'Orden cancelada exitosamente');
       loadOrders();
       setShowDetail(false);
     } catch (error) {
-      alert(error.response?.data?.detail || 'Error al cancelar la orden');
+      showNotification('error', error.response?.data?.detail || 'Error al cancelar la orden');
     } finally {
       setConfirmAction({ isOpen: false, orderId: null, action: null });
     }
@@ -425,6 +434,24 @@ export default function ServiceOrderListPage() {
         confirmText={confirmAction.action === 'complete' ? 'Completar' : 'Cancelar Orden'}
         danger={confirmAction.action === 'cancel'}
       />
+
+      {/* Notificación Toast */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg ${
+            notification.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckCircle size={24} />
+            ) : (
+              <AlertCircle size={24} />
+            )}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
