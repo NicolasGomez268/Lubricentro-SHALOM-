@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ServiceOrder, ServiceItem
+from .models import ServiceOrder, ServiceItem, Invoice
 from crm.serializers import VehicleSerializer, CustomerSerializer
 from inventory.serializers import ProductSerializer
 
@@ -112,3 +112,73 @@ class ServiceOrderUpdateSerializer(serializers.ModelSerializer):
             instance.calculate_total()
         
         return instance
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    customer_details = CustomerSerializer(source='customer', read_only=True)
+    service_order_number = serializers.CharField(source='service_order.order_number', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    invoice_type_display = serializers.CharField(source='get_invoice_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Invoice
+        fields = [
+            'id',
+            'invoice_number',
+            'invoice_type',
+            'invoice_type_display',
+            'service_order',
+            'service_order_number',
+            'customer',
+            'customer_details',
+            'issue_date',
+            'due_date',
+            'paid_date',
+            'status',
+            'status_display',
+            'subtotal',
+            'tax_rate',
+            'tax_amount',
+            'total',
+            'notes',
+            'created_by',
+            'created_by_username',
+            'created_at'
+        ]
+        read_only_fields = ['invoice_number', 'tax_amount', 'total', 'created_at']
+
+
+class InvoiceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
+        fields = [
+            'service_order',
+            'invoice_type',
+            'due_date',
+            'notes'
+        ]
+    
+    def validate_service_order(self, value):
+        # Validar que la orden esté completada
+        if value.status != 'COMPLETED':
+            raise serializers.ValidationError('Solo se pueden facturar órdenes completadas')
+        
+        # Validar que no tenga ya una factura
+        if hasattr(value, 'invoice'):
+            raise serializers.ValidationError('Esta orden ya tiene una factura asociada')
+        
+        return value
+    
+    def create(self, validated_data):
+        # Obtener el usuario del contexto
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        
+        # Obtener el cliente de la orden
+        validated_data['customer'] = validated_data['service_order'].customer
+        
+        # Crear la factura
+        invoice = Invoice.objects.create(**validated_data)
+        
+        return invoice

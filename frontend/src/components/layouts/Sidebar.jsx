@@ -15,11 +15,12 @@ const Sidebar = () => {
   const { user, isAdmin } = useAuth();
 
   const employeeMenuItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Panel Principal' },
-    { to: '/vehicles', icon: Car, label: 'Búsqueda de Vehículos' },
-    { to: '/service-order', icon: Wrench, label: 'Nueva Orden' },
+    { to: '/workspace', icon: Wrench, label: 'Nueva Orden' },
     { to: '/service-orders', icon: FileText, label: 'Historial de Órdenes' },
     { to: '/stock', icon: Package, label: 'Consultar Stock' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Panel Principal' },
+    { to: '/vehicles', icon: Car, label: 'Búsqueda de Vehículos' },
+    { to: '/customers', icon: Users, label: 'Búsqueda de Clientes' },
   ];
 
   const adminMenuItems = [

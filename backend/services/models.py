@@ -130,3 +130,91 @@ class ServiceItem(models.Model):
         # Recalcular el total de la orden
         self.service_order.calculate_total()
 
+
+class Invoice(models.Model):
+    """
+    Factura - Documento fiscal generado a partir de una orden completada
+    """
+    INVOICE_TYPE_CHOICES = [
+        ('A', 'Factura A'),
+        ('B', 'Factura B'),
+        ('C', 'Factura C'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('DRAFT', 'Borrador'),
+        ('ISSUED', 'Emitida'),
+        ('PAID', 'Pagada'),
+        ('CANCELLED', 'Anulada'),
+    ]
+    
+    # Número de factura único
+    invoice_number = models.CharField('Número de Factura', max_length=20, unique=True, editable=False)
+    
+    # Tipo de factura
+    invoice_type = models.CharField('Tipo de Factura', max_length=1, choices=INVOICE_TYPE_CHOICES, default='C')
+    
+    # Relación con la orden de servicio
+    service_order = models.OneToOneField(ServiceOrder, on_delete=models.PROTECT, related_name='invoice', verbose_name='Orden de Servicio')
+    
+    # Cliente
+    customer = models.ForeignKey('crm.Customer', on_delete=models.PROTECT, related_name='invoices', verbose_name='Cliente')
+    
+    # Fechas
+    issue_date = models.DateField('Fecha de Emisión', auto_now_add=True)
+    due_date = models.DateField('Fecha de Vencimiento', null=True, blank=True)
+    paid_date = models.DateField('Fecha de Pago', null=True, blank=True)
+    
+    # Estado
+    status = models.CharField('Estado', max_length=20, choices=STATUS_CHOICES, default='ISSUED')
+    
+    # Montos
+    subtotal = models.DecimalField('Subtotal', max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
+    tax_rate = models.DecimalField('Alícuota IVA', max_digits=5, decimal_places=2, default=Decimal('21.00'))
+    tax_amount = models.DecimalField('Monto IVA', max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField('Total', max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
+    
+    # Observaciones
+    notes = models.TextField('Observaciones', blank=True)
+    
+    # Usuario que generó la factura
+    created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='invoices_created', verbose_name='Generada por')
+    created_at = models.DateTimeField('Fecha de Creación', auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Factura'
+        verbose_name_plural = 'Facturas'
+        ordering = ['-issue_date', '-invoice_number']
+        indexes = [
+            models.Index(fields=['invoice_number']),
+            models.Index(fields=['customer']),
+            models.Index(fields=['status', 'issue_date']),
+        ]
+    
+    def __str__(self):
+        return f"Factura {self.invoice_type} #{self.invoice_number}"
+    
+    def save(self, *args, **kwargs):
+        # Generar número de factura automático
+        if not self.invoice_number:
+            last_invoice = Invoice.objects.filter(invoice_type=self.invoice_type).order_by('-id').first()
+            if last_invoice and last_invoice.invoice_number:
+                try:
+                    # Formato: FA-00001, FB-00001, FC-00001
+                    last_number = int(last_invoice.invoice_number.split('-')[1])
+                    new_number = last_number + 1
+                except (IndexError, ValueError):
+                    new_number = 1
+            else:
+                new_number = 1
+            self.invoice_number = f"F{self.invoice_type}-{new_number:05d}"
+        
+        # Calcular totales si no están establecidos
+        if not self.subtotal and self.service_order:
+            self.subtotal = self.service_order.total
+        
+        # Calcular IVA
+        self.tax_amount = (self.subtotal * self.tax_rate) / 100
+        self.total = self.subtotal + self.tax_amount
+        
+        super().save(*args, **kwargs)

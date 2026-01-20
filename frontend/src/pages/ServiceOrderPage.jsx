@@ -10,13 +10,14 @@ import {
     Wrench
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getVehicles } from '../services/crmService';
 import { inventoryService } from '../services/inventoryService';
 import { createServiceOrder } from '../services/serviceOrderService';
 
 export default function ServiceOrderPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicles, setVehicles] = useState([]);
@@ -31,7 +32,12 @@ export default function ServiceOrderPage() {
   // Cargar productos al montar el componente
   useEffect(() => {
     loadProducts();
-  }, []);
+    
+    // Si viene de la página unificada con vehículo precargado
+    if (location.state?.vehicle && location.state?.customer) {
+      setSelectedVehicle(location.state.vehicle);
+    }
+  }, [location.state]);
 
   const loadProducts = async () => {
     try {
@@ -43,13 +49,13 @@ export default function ServiceOrderPage() {
     }
   };
 
-  // Buscar vehículo por patente
+  // Buscar vehículo por patente o modelo
   const searchVehicle = async () => {
     if (!vehicleSearch.trim()) return;
     
     try {
       setLoading(true);
-      const data = await getVehicles({ plate: vehicleSearch });
+      const data = await getVehicles({ search: vehicleSearch });
       const vehiclesList = data.results || data;
       setSearchResults(Array.isArray(vehiclesList) ? vehiclesList : []);
       setShowResults(true);
@@ -259,7 +265,7 @@ export default function ServiceOrderPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Buscar por patente..."
+                placeholder="Buscar por patente, marca o modelo..."
                 value={vehicleSearch}
                 onChange={(e) => setVehicleSearch(e.target.value.toUpperCase())}
                 onKeyPress={(e) => e.key === 'Enter' && searchVehicle()}

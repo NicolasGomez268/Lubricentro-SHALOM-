@@ -21,8 +21,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         """
         Retorna el serializer apropiado según la acción
         """
-        if self.action == 'list':
-            return CustomerListSerializer
+        # Siempre usar CustomerSerializer para incluir vehículos
         return CustomerSerializer
     
     def get_queryset(self):
@@ -31,7 +30,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         """
         queryset = Customer.objects.annotate(
             vehicles_count=Count('vehicles')
-        ).select_related('created_by')
+        ).select_related('created_by').prefetch_related('vehicles')
         
         # Búsqueda por nombre, teléfono o email
         search = self.request.query_params.get('search', None)

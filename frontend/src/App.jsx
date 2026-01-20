@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import ServiceOrderListPage from './pages/ServiceOrderListPage'
 import ServiceOrderPage from './pages/ServiceOrderPage'
 import StockPage from './pages/StockPage'
+import UnifiedWorkspacePage from './pages/UnifiedWorkspacePage'
 import VehicleHistoryPage from './pages/VehicleHistoryPage'
 import VehicleManagementPage from './pages/VehicleManagementPage'
 import VehicleSearchPage from './pages/VehicleSearchPage'
@@ -26,10 +27,12 @@ function App() {
               <DashboardLayout />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route index element={<Navigate to="/workspace" replace />} />
+            <Route path="workspace" element={<UnifiedWorkspacePage />} />
             <Route path="dashboard" element={<EmployeeDashboard />} />
             <Route path="stock" element={<StockPage />} />
             <Route path="vehicles" element={<VehicleSearchPage />} />
+            <Route path="customers" element={<CustomerManagementPage />} />
             <Route path="vehicles/:vehicleId/history" element={<VehicleHistoryPage />} />
             <Route path="service-order" element={<ServiceOrderPage />} />
             <Route path="service-orders" element={<ServiceOrderListPage />} />

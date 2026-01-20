@@ -2,6 +2,7 @@ import { Car, Edit, Mail, MapPin, Phone, Plus, Search, Trash2 } from 'lucide-rea
 import { useEffect, useState } from 'react';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import CustomerModal from '../components/crm/CustomerModal';
+import VehicleModal from '../components/crm/VehicleModal';
 import crmService from '../services/crmService';
 
 export default function CustomerManagementPage() {
@@ -10,6 +11,7 @@ export default function CustomerManagementPage() {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [error, setError] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, customerId: null });
@@ -50,11 +52,21 @@ export default function CustomerManagementPage() {
         // Aplicar búsqueda
         if (searchTerm) {
             const search = searchTerm.toLowerCase();
-            filtered = filtered.filter(customer =>
-                customer.full_name.toLowerCase().includes(search) ||
-                customer.phone.includes(search) ||
-                (customer.email && customer.email.toLowerCase().includes(search))
-            );
+            filtered = filtered.filter(customer => {
+                // Buscar en nombre, teléfono, email
+                const matchBasicInfo = customer.full_name.toLowerCase().includes(search) ||
+                    customer.phone.includes(search) ||
+                    (customer.email && customer.email.toLowerCase().includes(search));
+                
+                // Buscar en patentes de vehículos
+                const matchVehicles = customer.vehicles && customer.vehicles.some(vehicle =>
+                    vehicle.plate.toLowerCase().includes(search) ||
+                    vehicle.brand.toLowerCase().includes(search) ||
+                    vehicle.model.toLowerCase().includes(search)
+                );
+                
+                return matchBasicInfo || matchVehicles;
+            });
         }
 
         setFilteredCustomers(filtered);
@@ -104,6 +116,28 @@ export default function CustomerManagementPage() {
         }
     };
 
+    const handleAddVehicle = (customer) => {
+        setSelectedCustomer(customer);
+        setIsVehicleModalOpen(true);
+    };
+
+    const handleVehicleModalClose = () => {
+        setIsVehicleModalOpen(false);
+        setSelectedCustomer(null);
+    };
+
+    const handleVehicleModalSave = async () => {
+        try {
+            await loadCustomers();
+            setIsVehicleModalOpen(false);
+            setSelectedCustomer(null);
+        } catch (err) {
+            console.error('Error reloading customers:', err);
+            setIsVehicleModalOpen(false);
+            setSelectedCustomer(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -124,7 +158,7 @@ export default function CustomerManagementPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, teléfono o email..."
+                        placeholder="Buscar por nombre, teléfono, email o patente..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -208,10 +242,26 @@ export default function CustomerManagementPage() {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Car size={16} />
-                                                    <span className="font-medium">{customer.vehicles_count || 0}</span>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-2 items-center">
+                                                    {customer.vehicles && customer.vehicles.length > 0 ? (
+                                                        customer.vehicles.map((vehicle) => (
+                                                            <div key={vehicle.id} className="bg-blue-50 px-3 py-1.5 rounded-md">
+                                                                <div className="text-sm font-bold text-blue-900">{vehicle.plate}</div>
+                                                                <div className="text-xs text-blue-600">{vehicle.brand} {vehicle.model}</div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-sm text-gray-400 italic">Sin vehículos</span>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleAddVehicle(customer)}
+                                                        className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded-md font-medium transition-colors"
+                                                        title="Agregar vehículo"
+                                                    >
+                                                        <Car size={14} />
+                                                        Agregar
+                                                    </button>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -254,6 +304,16 @@ export default function CustomerManagementPage() {
                     customer={selectedCustomer}
                     onClose={handleModalClose}
                     onSave={handleModalSave}
+                />
+            )}
+
+            {/* Modal de Vehículo */}
+            {isVehicleModalOpen && selectedCustomer && (
+                <VehicleModal
+                    vehicle={null}
+                    customers={[{ id: selectedCustomer.id, full_name: selectedCustomer.full_name }]}
+                    onClose={handleVehicleModalClose}
+                    onSave={handleVehicleModalSave}
                 />
             )}
 

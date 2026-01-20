@@ -1,11 +1,18 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.utils import timezone
-from .models import ServiceOrder, ServiceItem
-from .serializers import ServiceOrderSerializer, ServiceOrderCreateSerializer, ServiceOrderUpdateSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import ServiceOrder, ServiceItem, Invoice
+from .serializers import (
+    ServiceOrderSerializer, 
+    ServiceOrderCreateSerializer, 
+    ServiceOrderUpdateSerializer,
+    InvoiceSerializer,
+    InvoiceCreateSerializer
+)
 from inventory.models import Product, StockMovement
 
 
@@ -19,6 +26,11 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         'created_by'
     ).prefetch_related('items__product').all()
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'customer', 'vehicle']
+    search_fields = ['order_number', 'vehicle__plate', 'customer__name']
+    ordering_fields = ['created_at', 'total', 'order_number']
+    ordering = ['-created_at']
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -30,19 +42,27 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Filtros opcionales
-        status_param = self.request.query_params.get('status', None)
+        # Filtros opcionales adicionales
         plate = self.request.query_params.get('plate', None)
-        customer_id = self.request.query_params.get('customer', None)
-        
-        if status_param:
-            queryset = queryset.filter(status=status_param)
+        date_from = self.request.query_params.get('date_from', None)
+        date_to = self.request.query_params.get('date_to', None)
+        min_total = self.request.query_params.get('min_total', None)
+        max_total = self.request.query_params.get('max_total', None)
         
         if plate:
             queryset = queryset.filter(vehicle__plate__icontains=plate)
         
-        if customer_id:
-            queryset = queryset.filter(customer_id=customer_id)
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+        
+        if min_total:
+            queryset = queryset.filter(total__gte=min_total)
+        
+        if max_total:
+            queryset = queryset.filter(total__lte=max_total)
         
         return queryset
     
@@ -204,3 +224,125 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             'orders': serializer.data
         })
 
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para facturas.
+    """
+    queryset = Invoice.objects.select_related(
+        'customer',
+        'service_order',
+        'created_by'
+    ).all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'invoice_type', 'customer']
+    search_fields = ['invoice_number', 'customer__name']
+    ordering_fields = ['issue_date', 'total', 'invoice_number']
+    ordering = ['-issue_date']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return InvoiceCreateSerializer
+        return InvoiceSerializer
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtros adicionales
+        date_from = self.request.query_params.get('date_from', None)
+        date_to = self.request.query_params.get('date_to', None)
+        min_total = self.request.query_params.get('min_total', None)
+        max_total = self.request.query_params.get('max_total', None)
+        
+        if date_from:
+            queryset = queryset.filter(issue_date__gte=date_from)
+        
+        if date_to:
+            queryset = queryset.filter(issue_date__lte=date_to)
+        
+        if min_total:
+            queryset = queryset.filter(total__gte=min_total)
+        
+        if max_total:
+            queryset = queryset.filter(total__lte=max_total)
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def mark_as_paid(self, request, pk=None):
+        """
+        Marca una factura como pagada.
+        """
+        invoice = self.get_object()
+        
+        if invoice.status == 'PAID':
+            return Response(
+                {'detail': 'La factura ya está marcada como pagada.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if invoice.status == 'CANCELLED':
+            return Response(
+                {'detail': 'No se puede marcar como pagada una factura anulada.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        invoice.status = 'PAID'
+        invoice.paid_date = timezone.now().date()
+        invoice.save()
+        
+        return Response(
+            InvoiceSerializer(invoice).data,
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """
+        Anula una factura.
+        """
+        invoice = self.get_object()
+        
+        if invoice.status == 'CANCELLED':
+            return Response(
+                {'detail': 'La factura ya está anulada.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        invoice.status = 'CANCELLED'
+        invoice.save()
+        
+        return Response(
+            InvoiceSerializer(invoice).data,
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        Estadísticas de facturación.
+        """
+        from django.db.models import Sum, Count
+        
+        total_invoices = Invoice.objects.count()
+        issued = Invoice.objects.filter(status='ISSUED').count()
+        paid = Invoice.objects.filter(status='PAID').count()
+        cancelled = Invoice.objects.filter(status='CANCELLED').count()
+        
+        total_revenue = Invoice.objects.filter(
+            status__in=['ISSUED', 'PAID']
+        ).aggregate(total=Sum('total'))['total'] or 0
+        
+        pending_amount = Invoice.objects.filter(
+            status='ISSUED'
+        ).aggregate(total=Sum('total'))['total'] or 0
+        
+        return Response({
+            'total_invoices': total_invoices,
+            'issued': issued,
+            'paid': paid,
+            'cancelled': cancelled,
+            'total_revenue': float(total_revenue),
+            'pending_amount': float(pending_amount)
+        })

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ServiceOrder, ServiceItem
+from .models import ServiceOrder, ServiceItem, Invoice
 
 
 class ServiceItemInline(admin.TabularInline):
@@ -37,3 +37,29 @@ class ServiceItemAdmin(admin.ModelAdmin):
     search_fields = ['description', 'service_order__order_number']
     readonly_fields = ('subtotal', 'created_at')
 
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ['invoice_number', 'invoice_type', 'customer', 'status', 'total', 'issue_date']
+    list_filter = ['status', 'invoice_type', 'issue_date']
+    search_fields = ['invoice_number', 'customer__name', 'service_order__order_number']
+    readonly_fields = ['invoice_number', 'tax_amount', 'total', 'created_at']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('invoice_number', 'invoice_type', 'service_order', 'customer', 'status')
+        }),
+        ('Fechas', {
+            'fields': ('issue_date', 'due_date', 'paid_date')
+        }),
+        ('Montos', {
+            'fields': ('subtotal', 'tax_rate', 'tax_amount', 'total')
+        }),
+        ('Adicional', {
+            'fields': ('notes',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )

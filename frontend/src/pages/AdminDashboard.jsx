@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart3, DollarSign, Package, TrendingUp, Users } from 'lucide-react';
+import { AlertCircle, DollarSign, Package, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/common/StatCard';
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
                 Es necesario realizar un pedido pronto.
               </p>
               <button 
-                onClick={() => navigate('/inventory')}
+                onClick={() => navigate('/admin/inventory')}
                 className="btn-primary text-sm"
               >
                 Ver Productos con Stock Bajo
@@ -114,46 +114,12 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <div className="card">
-          <h3 className="text-lg font-bold text-shalom-gray mb-4">Ingresos Mensuales</h3>
-          <div className="h-64 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <TrendingUp className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Gráfico de ingresos (Próximamente)</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Services Chart */}
-        <div className="card">
-          <h3 className="text-lg font-bold text-shalom-gray mb-4">Servicios Más Solicitados</h3>
-          <div className="h-64 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Gráfico de servicios (Próximamente)</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="card">
-        <h3 className="text-lg font-bold text-shalom-gray mb-4">Actividad Reciente</h3>
-        <div className="text-center py-12 text-gray-500">
-          <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>No hay actividad registrada aún</p>
-        </div>
-      </div>
-
       {/* Quick Admin Actions */}
       <div className="card">
         <h3 className="text-lg font-bold text-shalom-gray mb-4">Gestión Rápida</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
-            onClick={() => navigate('/inventory')}
+            onClick={() => navigate('/admin/inventory')}
             className="btn-primary py-3"
           >
             <Package className="w-5 h-5 inline mr-2" />
@@ -166,76 +132,13 @@ const AdminDashboard = () => {
             <TrendingUp className="w-5 h-5 inline mr-2" />
             Ver Movimientos
           </button>
-          <button className="px-4 py-3 bg-gray-100 text-shalom-gray rounded-lg hover:bg-gray-200 transition-colors font-medium">
+          <button 
+            onClick={() => navigate('/admin/customers')}
+            className="px-4 py-3 bg-gray-100 text-shalom-gray rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          >
             <Users className="w-5 h-5 inline mr-2" />
-            Gestionar Empleados
+            Gestionar Clientes
           </button>
-        </div>
-      </div>
-
-      {/* Productos Destacados */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Productos Más Valiosos */}
-        <div className="card">
-          <h3 className="text-lg font-bold text-shalom-gray mb-4">
-            Productos con Mayor Valor en Stock
-          </h3>
-          {products.length > 0 ? (
-            <div className="space-y-3">
-              {products
-                .map(p => ({
-                  ...p,
-                  totalValue: parseFloat(p.sale_price) * p.stock_quantity
-                }))
-                .sort((a, b) => b.totalValue - a.totalValue)
-                .slice(0, 5)
-                .map(product => (
-                  <div key={product.id} className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <div className="flex-1">
-                      <p className="font-medium text-shalom-gray">{product.name}</p>
-                      <p className="text-sm text-gray-500">{product.stock_quantity} {product.unit_display}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(product.totalValue)}</p>
-                      <p className="text-sm text-gray-500">{formatCurrency(product.sale_price)} c/u</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 py-8">No hay productos registrados</p>
-          )}
-        </div>
-
-        {/* Productos con Mejor Margen */}
-        <div className="card">
-          <h3 className="text-lg font-bold text-shalom-gray mb-4">
-            Productos con Mejor Margen
-          </h3>
-          {products.length > 0 ? (
-            <div className="space-y-3">
-              {products
-                .filter(p => p.profit_margin > 0)
-                .sort((a, b) => b.profit_margin - a.profit_margin)
-                .slice(0, 5)
-                .map(product => (
-                  <div key={product.id} className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <div className="flex-1">
-                      <p className="font-medium text-shalom-gray">{product.name}</p>
-                      <p className="text-sm text-gray-500">{product.category_display}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">{product.profit_margin.toFixed(1)}%</p>
-                      <p className="text-sm text-gray-500">
-                        {formatCurrency(product.purchase_price)} → {formatCurrency(product.sale_price)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 py-8">No hay productos registrados</p>
-          )}
         </div>
       </div>
     </div>

@@ -3,13 +3,12 @@ import {
     CheckCircle,
     Edit2,
     Eye,
-    Filter,
     Printer,
-    Search,
     XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import AdvancedSearchPanel from '../components/services/AdvancedSearchPanel';
 import EditOrderModal from '../components/services/EditOrderModal';
 import {
     cancelServiceOrder,
@@ -21,8 +20,7 @@ import {
 export default function ServiceOrderListPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchPlate, setSearchPlate] = useState('');
+  const [advancedFilters, setAdvancedFilters] = useState({});
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -31,16 +29,12 @@ export default function ServiceOrderListPage() {
 
   useEffect(() => {
     loadOrders();
-  }, [filterStatus, searchPlate]);
+  }, [advancedFilters]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filterStatus) params.status = filterStatus;
-      if (searchPlate) params.plate = searchPlate;
-      
-      const response = await getServiceOrders(params);
+      const response = await getServiceOrders(advancedFilters);
       const ordersList = response.data.results || response.data;
       setOrders(Array.isArray(ordersList) ? ordersList : []);
     } catch (error) {
@@ -49,6 +43,14 @@ export default function ServiceOrderListPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdvancedSearch = (filters) => {
+    setAdvancedFilters(filters);
+  };
+
+  const handleResetSearch = () => {
+    setAdvancedFilters({});
   };
 
   const showNotification = (type, message) => {
@@ -140,7 +142,7 @@ export default function ServiceOrderListPage() {
             ${order.completed_at ? `<p><strong>Fecha de Finalización:</strong> ${new Date(order.completed_at).toLocaleDateString('es-AR')}</p>` : ''}
             <p><strong>Vehículo:</strong> ${order.vehicle_details?.brand || ''} ${order.vehicle_details?.model || ''}</p>
             <p><strong>Patente:</strong> ${order.vehicle_details?.plate || ''}</p>
-            <p><strong>Cliente:</strong> ${order.customer_details?.name || ''}</p>
+            <p><strong>Cliente:</strong> ${order.customer_details?.full_name || 'N/A'}</p>
             <p><strong>Teléfono:</strong> ${order.customer_details?.phone || ''}</p>
           </div>
           
@@ -197,51 +199,11 @@ export default function ServiceOrderListPage() {
         <h1 className="text-3xl font-bold text-gray-800">Historial de Órdenes</h1>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              <Filter size={16} className="inline mr-2" />
-              Estado
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos</option>
-              <option value="PENDING">Pendiente</option>
-              <option value="COMPLETED">Completada</option>
-              <option value="CANCELLED">Cancelada</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              <Search size={16} className="inline mr-2" />
-              Buscar por Patente
-            </label>
-            <input
-              type="text"
-              value={searchPlate}
-              onChange={(e) => setSearchPlate(e.target.value.toUpperCase())}
-              placeholder="Ej: ABC123"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={loadOrders}
-              disabled={loading}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              {loading ? 'Cargando...' : 'Buscar'}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Búsqueda Avanzada */}
+      <AdvancedSearchPanel 
+        onSearch={handleAdvancedSearch}
+        onReset={handleResetSearch}
+      />
 
       {/* Lista de órdenes */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -273,7 +235,7 @@ export default function ServiceOrderListPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {order.vehicle_details?.plate} - {order.vehicle_details?.brand}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{order.customer_details?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{order.customer_details?.full_name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(order.status)}`}>
                         {order.status_display}
@@ -370,7 +332,7 @@ export default function ServiceOrderListPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Cliente</p>
-                  <p className="font-medium">{selectedOrder.customer_details?.name}</p>
+                  <p className="font-medium">{selectedOrder.customer_details?.full_name || 'N/A'}</p>
                   <p className="text-sm">{selectedOrder.customer_details?.phone}</p>
                 </div>
               </div>
