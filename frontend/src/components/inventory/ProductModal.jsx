@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { inventoryService } from '../../services/inventoryService';
 
@@ -6,10 +6,12 @@ const ProductModal = ({ product, onClose }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    category: 'ACEITE',
+    category: '',  // Sin valor por defecto
     brand: '',
     description: '',
     stock_quantity: 0,
@@ -41,10 +43,51 @@ const ProductModal = ({ product, onClose }) => {
 
   const loadCategories = async () => {
     try {
+      console.log('🔄 Cargando categorías...');
       const data = await inventoryService.getCategories();
-      setCategories(data);
+      console.log('✅ Categorías recibidas del backend:', data);
+      console.log('📊 Cantidad de categorías:', data?.length);
+      console.log('📋 Tipo de dato:', typeof data, Array.isArray(data));
+      setCategories(data || []);
+      // Si no hay categorías y no estamos editando, dejamos vacío
+      // Si hay categorías y no estamos editando, seleccionar la primera
+      if (!product && data && data.length > 0) {
+        console.log('🎯 Seleccionando primera categoría:', data[0].value);
+        setFormData(prev => ({ ...prev, category: data[0].value }));
+      }
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
+      console.error('❌ Error al cargar categorías:', error);
+    }
+  };
+
+  const handleAddNewCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('Por favor ingresa un nombre para la categoría');
+      return;
+    }
+
+    try {
+      const categoryValue = newCategoryName.toUpperCase().replace(/\s+/g, '_');
+      const newCategory = {
+        value: categoryValue,
+        label: newCategoryName
+      };
+      
+      // Agregar la nueva categoría al estado local
+      setCategories(prev => [...prev, newCategory]);
+      
+      // Seleccionar la nueva categoría en el formulario
+      setFormData(prev => ({
+        ...prev,
+        category: categoryValue
+      }));
+      
+      // Limpiar y cerrar el input
+      setNewCategoryName('');
+      setShowNewCategoryInput(false);
+    } catch (error) {
+      console.error('Error al agregar categoría:', error);
+      alert('Error al agregar la categoría');
     }
   };
 
@@ -104,6 +147,8 @@ const ProductModal = ({ product, onClose }) => {
       onClose();
     } catch (error) {
       console.error('Error al guardar producto:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       if (error.response?.data) {
         // Mapear errores del backend
         const backendErrors = {};
@@ -113,6 +158,7 @@ const ProductModal = ({ product, onClose }) => {
             : error.response.data[key];
         });
         setErrors(backendErrors);
+        alert(`Error: ${JSON.stringify(error.response.data)}`);
       } else {
         alert('Error al guardar el producto. Por favor, verifica los datos.');
       }
@@ -174,23 +220,71 @@ const ProductModal = ({ product, onClose }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Categoría *
                 </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="input-field"
-                  required
-                >
-                  {categories.length === 0 ? (
-                    <option value="">Cargando categorías...</option>
-                  ) : (
-                    categories.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </option>
-                    ))
-                  )}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="input-field flex-1"
+                    required
+                  >
+                    <option value="">Seleccionar categoría...</option>
+                    {(() => {
+                      console.log('🔍 Renderizando options del select. Categories:', categories);
+                      console.log('🔍 Categories.length:', categories?.length);
+                      return categories.map((cat, index) => {
+                        console.log(`📝 Renderizando option ${index}:`, cat);
+                        return (
+                          <option key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </option>
+                        );
+                      });
+                    })()}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                    title="Agregar nueva categoría"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {showNewCategoryInput && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Nombre de la nueva categoría"
+                      className="input-field flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddNewCategory();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddNewCategory}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Agregar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewCategoryInput(false);
+                        setNewCategoryName('');
+                      }}
+                      className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>

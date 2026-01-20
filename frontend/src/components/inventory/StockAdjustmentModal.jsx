@@ -5,7 +5,7 @@ import { inventoryService } from '../../services/inventoryService';
 const StockAdjustmentModal = ({ product, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    movement_type: 'ENTRADA',
+    movement_type: 'COMPRA',
     quantity: '',
     reason: '',
     reference: '',
@@ -36,9 +36,9 @@ const StockAdjustmentModal = ({ product, onClose }) => {
 
   const getNewStock = () => {
     const qty = parseInt(formData.quantity) || 0;
-    if (formData.movement_type === 'ENTRADA') {
+    if (formData.movement_type === 'COMPRA') {
       return product.stock_quantity + qty;
-    } else if (formData.movement_type === 'SALIDA') {
+    } else if (formData.movement_type === 'VENTA') {
       return product.stock_quantity - qty;
     } else {
       return qty;
@@ -82,28 +82,28 @@ const StockAdjustmentModal = ({ product, onClose }) => {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, movement_type: 'ENTRADA' }))}
+                onClick={() => setFormData(prev => ({ ...prev, movement_type: 'COMPRA' }))}
                 className={`p-3 rounded-lg border-2 transition-colors flex flex-col items-center ${
-                  formData.movement_type === 'ENTRADA'
+                  formData.movement_type === 'COMPRA'
                     ? 'border-green-500 bg-green-50 text-green-700'
                     : 'border-gray-300 hover:border-green-300'
                 }`}
               >
                 <ArrowUp className="w-6 h-6 mb-1" />
-                <span className="text-sm font-medium">Entrada</span>
+                <span className="text-sm font-medium">COMPRA</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, movement_type: 'SALIDA' }))}
+                onClick={() => setFormData(prev => ({ ...prev, movement_type: 'VENTA' }))}
                 className={`p-3 rounded-lg border-2 transition-colors flex flex-col items-center ${
-                  formData.movement_type === 'SALIDA'
+                  formData.movement_type === 'VENTA'
                     ? 'border-red-500 bg-red-50 text-red-700'
                     : 'border-gray-300 hover:border-red-300'
                 }`}
               >
                 <ArrowDown className="w-6 h-6 mb-1" />
-                <span className="text-sm font-medium">Salida</span>
+                <span className="text-sm font-medium">VENTA</span>
               </button>
 
               <button

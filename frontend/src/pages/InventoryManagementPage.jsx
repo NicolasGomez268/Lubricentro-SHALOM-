@@ -8,6 +8,7 @@ import { inventoryService } from '../services/inventoryService';
 const InventoryManagementPage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
@@ -19,11 +20,21 @@ const InventoryManagementPage = () => {
 
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
 
   useEffect(() => {
     applyFilters();
   }, [products, searchTerm, categoryFilter, stockFilter]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await inventoryService.getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+    }
+  };
 
   const applyFilters = () => {
     let filtered = [...products];
@@ -163,11 +174,11 @@ const InventoryManagementPage = () => {
               className="input-field"
             >
               <option value="ALL">Todas</option>
-              <option value="ACEITE">Aceite</option>
-              <option value="FILTRO_AIRE">Filtro de Aire</option>
-              <option value="FILTRO_ACEITE">Filtro de Aceite</option>
-              <option value="FILTRO_COMBUSTIBLE">Filtro de Combustible</option>
-              <option value="OTROS">Otros</option>
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
             </select>
           </div>
 

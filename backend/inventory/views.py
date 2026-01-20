@@ -78,10 +78,21 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def categories(self, request):
         """
-        Endpoint para obtener lista de categorías
+        Endpoint para obtener lista de categorías dinámicas de la base de datos
         """
-        categories = Product.CATEGORY_CHOICES
-        return Response([{'value': cat[0], 'label': cat[1]} for cat in categories])
+        # Obtener todas las categorías únicas de productos existentes
+        existing_categories = Product.objects.values_list('category', flat=True).distinct().order_by('category')
+        
+        # Crear lista de categorías con value y label
+        all_categories = []
+        for cat in existing_categories:
+            if cat:
+                # Convertir de UPPER_CASE a Title Case para el label
+                label = cat.replace('_', ' ').title()
+                all_categories.append({'value': cat, 'label': label})
+        
+        # Si no hay categorías, devolver una lista vacía para que se puedan agregar nuevas
+        return Response(all_categories)
     
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):

@@ -8,14 +8,6 @@ class Product(models.Model):
     """
     Modelo para gestionar productos del inventario (Aceites, Filtros, etc.)
     """
-    CATEGORY_CHOICES = (
-        ('ACEITE', 'Aceite'),
-        ('FILTRO_AIRE', 'Filtro de Aire'),
-        ('FILTRO_ACEITE', 'Filtro de Aceite'),
-        ('FILTRO_COMBUSTIBLE', 'Filtro de Combustible'),
-        ('OTROS', 'Otros'),
-    )
-    
     UNIT_CHOICES = (
         ('LITRO', 'Litro'),
         ('UNIDAD', 'Unidad'),
@@ -24,7 +16,7 @@ class Product(models.Model):
     
     code = models.CharField('Código', max_length=50, unique=True)
     name = models.CharField('Nombre', max_length=200)
-    category = models.CharField('Categoría', max_length=20, choices=CATEGORY_CHOICES)
+    category = models.CharField('Categoría', max_length=50)  # Sin choices para permitir categorías dinámicas
     brand = models.CharField('Marca', max_length=100, blank=True, null=True)
     description = models.TextField('Descripción', blank=True, null=True)
     
@@ -73,8 +65,8 @@ class StockMovement(models.Model):
     Modelo para registrar movimientos de stock (entradas y salidas)
     """
     MOVEMENT_TYPE_CHOICES = (
-        ('ENTRADA', 'Entrada'),
-        ('SALIDA', 'Salida'),
+        ('COMPRA', 'Compra'),
+        ('VENTA', 'Venta'),
         ('AJUSTE', 'Ajuste'),
     )
     
@@ -104,9 +96,9 @@ class StockMovement(models.Model):
                 # Bloquear el producto para evitar condiciones de carrera
                 product = Product.objects.select_for_update().get(pk=self.product.pk)
                 
-                if self.movement_type == 'ENTRADA':
+                if self.movement_type == 'COMPRA':
                     product.stock_quantity += self.quantity
-                elif self.movement_type == 'SALIDA':
+                elif self.movement_type == 'VENTA':
                     new_stock = product.stock_quantity - self.quantity
                     if new_stock < 0:
                         raise ValidationError(

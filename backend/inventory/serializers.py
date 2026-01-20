@@ -8,7 +8,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     is_low_stock = serializers.ReadOnlyField()
     profit_margin = serializers.ReadOnlyField()
-    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    category_display = serializers.CharField(source='category', read_only=True)
     unit_display = serializers.CharField(source='get_unit_display', read_only=True)
     
     class Meta:
@@ -60,7 +60,7 @@ class StockAdjustmentSerializer(serializers.Serializer):
     """
     Serializer para ajustar el stock de un producto
     """
-    movement_type = serializers.ChoiceField(choices=['ENTRADA', 'SALIDA', 'AJUSTE'])
+    movement_type = serializers.ChoiceField(choices=['COMPRA', 'VENTA', 'AJUSTE'])
     quantity = serializers.IntegerField(min_value=0)
     reason = serializers.CharField(required=False, allow_blank=True)
     reference = serializers.CharField(required=False, allow_blank=True)

@@ -7,6 +7,7 @@ import CustomerManagementPage from './pages/CustomerManagementPage'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import InventoryManagementPage from './pages/InventoryManagementPage'
 import LoginPage from './pages/LoginPage'
+import PurchaseOrderPage from './pages/PurchaseOrderPage'
 import ServiceOrderListPage from './pages/ServiceOrderListPage'
 import ServiceOrderPage from './pages/ServiceOrderPage'
 import StockPage from './pages/StockPage'
@@ -44,6 +45,11 @@ function App() {
             <Route path="admin/inventory" element={
               <ProtectedRoute requireAdmin>
                 <InventoryManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/purchase-order" element={
+              <ProtectedRoute requireAdmin>
+                <PurchaseOrderPage />
               </ProtectedRoute>
             } />
             <Route path="admin/customers" element={

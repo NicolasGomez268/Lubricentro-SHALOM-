@@ -3,6 +3,7 @@ import {
     FileText,
     LayoutDashboard,
     Package,
+    ShoppingCart,
     Users
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
@@ -19,6 +20,7 @@ const Sidebar = () => {
   const adminMenuItems = [
     { to: '/service-order', icon: FileText, label: 'Historial de Órdenes' },
     { to: '/admin/inventory', icon: Package, label: 'Gestión de Stock' },
+    { to: '/admin/purchase-order', icon: ShoppingCart, label: 'Orden de Venta' },
     { to: '/admin/customers', icon: Users, label: 'Clientes' },
     { to: '/admin/vehicles', icon: Car, label: 'Vehículos' },
   ];
