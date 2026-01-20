@@ -1,11 +1,15 @@
-import { Car, Edit, Mail, MapPin, Phone, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Car, Edit, Mail, MapPin, Phone, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import CustomerModal from '../components/crm/CustomerModal';
 import VehicleModal from '../components/crm/VehicleModal';
+import { useAuth } from '../context/AuthContext';
 import crmService from '../services/crmService';
 
 export default function CustomerManagementPage() {
+    const { isAdmin } = useAuth();
+    const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [filteredCustomers, setFilteredCustomers] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -139,17 +143,31 @@ export default function CustomerManagementPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6 bg-gray-800 min-h-screen">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Gestión de Clientes</h1>
-                <button
-                    onClick={handleCreateCustomer}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <Plus size={20} />
-                    Nuevo Cliente
-                </button>
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Gestión de Clientes</h1>
+                    <p className="text-gray-300 mt-1">Buscar por nombre, teléfono, email o patente</p>
+                </div>
+                <div className="flex gap-3">
+                    {!isAdmin && (
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                            Volver
+                        </button>
+                    )}
+                    <button
+                        onClick={handleCreateCustomer}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus size={20} />
+                        Nuevo Cliente
+                    </button>
+                </div>
             </div>
 
             {/* Búsqueda */}

@@ -1,11 +1,15 @@
-import { Car, Plus, Search, User } from 'lucide-react';
+import { AlertCircle, Car, DollarSign, Package, Plus, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import StatCard from '../components/common/StatCard';
+import { useAuth } from '../context/AuthContext';
 import crmService from '../services/crmService';
 import { inventoryService } from '../services/inventoryService';
+import { formatCurrency, formatNumber } from '../utils/formatters';
 
 export default function UnifiedWorkspacePage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -20,10 +24,37 @@ export default function UnifiedWorkspacePage() {
   const loadProducts = async () => {
     try {
       const data = await inventoryService.getProducts();
-      setProducts(data);
+      console.log('Productos cargados:', data);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error al cargar productos:', error);
+      setProducts([]);
     }
+  };
+
+  const calculateStats = () => {
+    if (!products || products.length === 0) {
+      return {
+        totalProducts: 0,
+        lowStockProducts: 0,
+        totalInventoryValue: 0,
+        outOfStock: 0
+      };
+    }
+
+    const totalProducts = products.length;
+    const lowStockProducts = products.filter(p => p.is_low_stock || p.stock_quantity <= p.stock_min).length;
+    const totalInventoryValue = products.reduce((sum, p) => 
+      sum + (parseFloat(p.sale_price || 0) * (p.stock_quantity || 0)), 0
+    );
+    const outOfStock = products.filter(p => p.stock_quantity === 0).length;
+
+    return {
+      totalProducts,
+      lowStockProducts,
+      totalInventoryValue,
+      outOfStock
+    };
   };
 
   const handleSearch = async () => {
@@ -79,7 +110,7 @@ export default function UnifiedWorkspacePage() {
     }
 
     // Navegar a crear orden con datos precargados
-    navigate('/service-order', {
+    navigate('/service-order/new', {
       state: {
         vehicle: selectedVehicle,
         customer: selectedCustomer
@@ -93,8 +124,68 @@ export default function UnifiedWorkspacePage() {
     }
   };
 
+  const stats = isAdmin && products.length > 0 ? calculateStats() : null;
+
+  console.log('isAdmin:', isAdmin, 'products.length:', products.length, 'stats:', stats);
+
   return (
     <div className="space-y-6">
+      {/* Métricas de Inventario - Solo para Admin */}
+      {isAdmin && stats && products.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="Valor Total Inventario"
+              value={formatCurrency(stats.totalInventoryValue)}
+              icon={DollarSign}
+              color="green"
+            />
+            <StatCard
+              title="Productos Totales"
+              value={formatNumber(stats.totalProducts)}
+              icon={Package}
+              color="blue"
+            />
+            <StatCard
+              title="Stock Bajo"
+              value={formatNumber(stats.lowStockProducts)}
+              icon={AlertCircle}
+              color="red"
+            />
+            <StatCard
+              title="Sin Stock"
+              value={formatNumber(stats.outOfStock)}
+              icon={Package}
+              color="yellow"
+            />
+          </div>
+
+          {/* Alerta de Stock Bajo */}
+          {stats.lowStockProducts > 0 && (
+            <div className="card bg-red-50 border-l-4 border-shalom-red">
+              <div className="flex items-start">
+                <AlertCircle className="w-6 h-6 text-shalom-red mr-3 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-shalom-red mb-2">
+                    ⚠️ Alerta de Stock Bajo
+                  </h3>
+                  <p className="text-gray-700 mb-3">
+                    Hay {stats.lowStockProducts} producto(s) con stock bajo o agotado. 
+                    Es necesario realizar un pedido pronto.
+                  </p>
+                  <button 
+                    onClick={() => navigate('/admin/inventory')}
+                    className="btn-primary text-sm"
+                  >
+                    Ver Productos con Stock Bajo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Nueva Orden de Servicio</h1>

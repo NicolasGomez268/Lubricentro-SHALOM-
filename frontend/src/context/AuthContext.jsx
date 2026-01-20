@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     isAuthenticated: !!user,
-    isAdmin: user?.is_admin || false,
+    isAdmin: user?.is_staff || user?.is_admin || false,
     isEmployee: user?.is_employee || false,
   };
 

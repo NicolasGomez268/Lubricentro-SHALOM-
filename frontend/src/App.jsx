@@ -34,8 +34,8 @@ function App() {
             <Route path="vehicles" element={<VehicleSearchPage />} />
             <Route path="customers" element={<CustomerManagementPage />} />
             <Route path="vehicles/:vehicleId/history" element={<VehicleHistoryPage />} />
-            <Route path="service-order" element={<ServiceOrderPage />} />
-            <Route path="service-orders" element={<ServiceOrderListPage />} />
+            <Route path="service-order" element={<ServiceOrderListPage />} />
+            <Route path="service-order/new" element={<ServiceOrderPage />} />
             <Route path="admin" element={
               <ProtectedRoute requireAdmin>
                 <AdminDashboard />

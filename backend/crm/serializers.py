@@ -7,6 +7,7 @@ class VehicleSerializer(serializers.ModelSerializer):
     Serializer para el modelo Vehicle
     """
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
+    customer_details = serializers.SerializerMethodField()
     display_name = serializers.CharField(read_only=True)
     
     class Meta:
@@ -14,10 +15,23 @@ class VehicleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'plate', 'brand', 'model', 'year', 'color',
             'engine_type', 'vin', 'current_mileage', 'customer',
-            'customer_name', 'notes', 'is_active', 'created_at',
+            'customer_name', 'customer_details', 'notes', 'is_active', 'created_at',
             'updated_at', 'display_name'
         ]
         read_only_fields = ['created_at', 'updated_at']
+    
+    def get_customer_details(self, obj):
+        """
+        Retorna información básica del cliente
+        """
+        if obj.customer:
+            return {
+                'id': obj.customer.id,
+                'full_name': obj.customer.full_name,
+                'phone': obj.customer.phone,
+                'email': obj.customer.email
+            }
+        return None
     
     def validate_plate(self, value):
         """

@@ -1,9 +1,11 @@
-import { Calendar, Car, Gauge, History, Mail, MapPin, Phone, Search, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Car, Gauge, History, Mail, MapPin, Phone, Search, User } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import crmService from '../services/crmService';
 
 export default function VehicleSearchPage() {
+    const { isAdmin } = useAuth();
     const [plate, setPlate] = useState('');
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -44,11 +46,22 @@ export default function VehicleSearchPage() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Búsqueda de Vehículos</h1>
-                <p className="text-gray-600 mt-1">Ingrese la patente para ver la información del vehículo y cliente</p>
+        <div className="space-y-6 p-6">
+            {/* Header con botón volver */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Búsqueda de Vehículos</h1>
+                    <p className="text-gray-300 mt-1">Ingrese la patente para ver la información del vehículo y cliente</p>
+                </div>
+                {!isAdmin && (
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        Volver
+                    </button>
+                )}
             </div>
 
             {/* Formulario de Búsqueda */}

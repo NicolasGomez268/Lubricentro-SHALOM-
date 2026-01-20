@@ -1,5 +1,6 @@
 import {
     AlertCircle,
+    ArrowLeft,
     CheckCircle,
     Edit2,
     Eye,
@@ -7,9 +8,11 @@ import {
     XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import AdvancedSearchPanel from '../components/services/AdvancedSearchPanel';
 import EditOrderModal from '../components/services/EditOrderModal';
+import { useAuth } from '../context/AuthContext';
 import {
     cancelServiceOrder,
     completeServiceOrder,
@@ -26,6 +29,10 @@ export default function ServiceOrderListPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, orderId: null, action: null });
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadOrders();
@@ -194,9 +201,18 @@ export default function ServiceOrderListPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-800 min-h-screen">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Historial de Órdenes</h1>
+        <h1 className="text-3xl font-bold text-white">Historial de Órdenes</h1>
+        {!isAdmin && (
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver
+          </button>
+        )}
       </div>
 
       {/* Búsqueda Avanzada */}

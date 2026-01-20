@@ -120,12 +120,12 @@ const InventoryManagementPage = () => {
   const lowStockCount = products.filter(p => p.is_low_stock).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-800 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-shalom-gray mb-2">Gestión de Inventario</h1>
-          <p className="text-gray-600">Administra productos, stock y precios</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Gestión de Inventario</h1>
+          <p className="text-gray-300">Administra productos, stock y precios</p>
         </div>
         <button onClick={handleCreateProduct} className="btn-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />

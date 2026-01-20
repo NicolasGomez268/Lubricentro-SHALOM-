@@ -1,22 +1,73 @@
-import { ArrowDownCircle, ArrowUpCircle, Clock, Filter, Package, RefreshCw, Search, User } from 'lucide-react';
+import { ArrowDownCircle, ArrowLeft, ArrowUpCircle, Clock, Filter, Package, RefreshCw, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/inventoryService';
 import { formatDate } from '../utils/formatters';
 
 const StockPage = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  const navigate = useNavigate();
+  
   const [movements, setMovements] = useState([]);
   const [filteredMovements, setFilteredMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [movementTypeFilter, setMovementTypeFilter] = useState('ALL');
+  
+  // Para vista de empleado - búsqueda de productos
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
 
   useEffect(() => {
-    loadMovements();
-  }, []);
+    if (isAdmin) {
+      loadMovements();
+    } else {
+      loadProducts();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
-    filterMovements();
+    if (isAdmin) {
+      filterMovements();
+    }
   }, [searchTerm, movementTypeFilter, movements]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      filterProducts();
+    }
+  }, [productSearchTerm, products]);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await inventoryService.getProducts();
+      setProducts(Array.isArray(data) ? data : []);
+      setFilteredProducts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      setProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterProducts = () => {
+    if (!productSearchTerm.trim()) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const filtered = products.filter(product =>
+      product.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(productSearchTerm.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  };
 
   const loadMovements = async () => {
     try {
@@ -85,12 +136,99 @@ const StockPage = () => {
     );
   }
 
+  // Vista para EMPLEADOS - Solo búsqueda de productos
+  if (!isAdmin) {
+    return (
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Consultar Stock</h1>
+            <p className="text-gray-300">Busca productos para verificar disponibilidad</p>
+          </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver
+          </button>
+        </div>
+
+        {/* Búsqueda */}
+        <div className="card">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Search className="w-4 h-4 inline mr-2" />
+            Buscar Producto
+          </label>
+          <input
+            type="text"
+            value={productSearchTerm}
+            onChange={(e) => setProductSearchTerm(e.target.value)}
+            placeholder="Buscar por nombre o código..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg"
+            autoFocus
+          />
+        </div>
+
+        {/* Resultados */}
+        <div className="card">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p>{productSearchTerm ? 'No se encontraron productos' : 'Ingresa un término de búsqueda'}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                      <p className="text-sm text-gray-500">{product.sku}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Stock disponible:</span>
+                      <span className={`text-2xl font-bold ${
+                        product.stock > product.stock_min ? 'text-green-600' :
+                        product.stock > 0 ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {product.stock}
+                      </span>
+                    </div>
+                    {product.stock <= product.stock_min && (
+                      <p className="text-xs text-orange-600 mt-2">
+                        ⚠️ Stock bajo (Mín: {product.stock_min})
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
+                    <p>Precio: <span className="font-semibold text-gray-900">${parseFloat(product.sale_price).toFixed(2)}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Vista para ADMINISTRADORES - Vista completa con movimientos
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-800 min-h-screen">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-shalom-gray mb-2">Movimientos de Stock</h1>
-        <p className="text-gray-600">Historial completo de entradas, salidas y ajustes de inventario</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Movimientos de Stock</h1>
+        <p className="text-gray-300">Historial completo de entradas, salidas y ajustes de inventario</p>
       </div>
 
       {/* Stats */}

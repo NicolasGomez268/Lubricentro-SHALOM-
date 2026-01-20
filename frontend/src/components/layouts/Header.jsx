@@ -1,54 +1,47 @@
-import { Bell, LogOut, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import shalomLogo from '../../assets/shalom-logo.png';
 import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const currentDate = new Date().toLocaleDateString('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  // Usar el mismo header para TODOS
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="px-6 py-4 flex items-center justify-between">
-        {/* Título de la página */}
-        <div>
-          <h2 className="text-2xl font-bold text-shalom-gray">
-            Bienvenido, {user?.full_name?.split(' ')[0]}
-          </h2>
-          <p className="text-sm text-gray-600">
-            {new Date().toLocaleDateString('es-AR', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
+    <header className="bg-gray-900 border-b-4 border-shalom-red">
+      <div className="px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <img src={shalomLogo} alt="Shalom Logo" className="h-16 w-auto" />
+          <div>
+            <h1 className="text-3xl font-bold text-white">SHALOM CAR SERVICE</h1>
+            <p className="text-gray-400 text-sm">Servicio Profesional Automotriz</p>
+          </div>
         </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-4">
-          {/* Notificaciones */}
-          <button className="relative p-2 text-gray-600 hover:text-shalom-red rounded-lg hover:bg-gray-100 transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-shalom-red rounded-full"></span>
-          </button>
-
-          {/* Perfil */}
-          <button className="p-2 text-gray-600 hover:text-shalom-red rounded-lg hover:bg-gray-100 transition-colors">
-            <User className="w-5 h-5" />
-          </button>
-
-          {/* Logout */}
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <h2 className="text-2xl font-bold text-white">Bienvenido, {user?.full_name?.split(' ')[0] || 'Usuario'}</h2>
+            <p className="text-gray-300 capitalize text-sm">{currentDate}</p>
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-shalom-red hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-shalom-red hover:bg-red-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">Cerrar Sesión</span>
+            <span className="text-sm font-bold">Cerrar Sesión</span>
           </button>
         </div>
       </div>
