@@ -1,0 +1,6 @@
+# Vercel - Ignore backend folder
+/dist/
+/node_modules/
+/.env
+/db.sqlite3
+/backend/

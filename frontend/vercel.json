@@ -1,0 +1,16 @@
+# Vercel configuration for React + Vite
+
+# Install dependencies
+install_command = "npm install"
+
+# Build command
+build_command = "npm run build"
+
+# Output directory
+output_directory = "dist"
+
+# Vite needs to set the base path if deploying to a subpath
+# Uncomment and set if needed
+# base = "/"
+
+# For environment variables, use Vercel dashboard
