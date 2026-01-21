@@ -180,6 +180,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "https://ShalomCarService.pythonanywhere.com",
     "https://shalom-car-service.vercel.app",
+    "https://lubricentro-shalom.vercel.app",
     "https://*.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
