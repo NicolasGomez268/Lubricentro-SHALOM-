@@ -45,26 +45,32 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update']:
             return ProductCreateUpdateSerializer
         return ProductSerializer
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        
+
         # Filtrar por categoría
         category = self.request.query_params.get('category', None)
         if category:
             queryset = queryset.filter(category=category)
-        
+
         # Filtrar solo activos
         is_active = self.request.query_params.get('is_active', None)
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
-        
+
         # Filtrar productos con stock bajo
         low_stock = self.request.query_params.get('low_stock', None)
         if low_stock and low_stock.lower() == 'true':
             queryset = [p for p in queryset if p.is_low_stock]
-        
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        # Si hay parámetro de búsqueda, desactiva la paginación para mostrar todos los resultados
+        if request.query_params.get('search'):
+            self.pagination_class = None
+        return super().list(request, *args, **kwargs)
     
     @action(detail=False, methods=['get'])
     def low_stock(self, request):

@@ -23,7 +23,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         """
         # Siempre usar CustomerSerializer para incluir vehículos
         return CustomerSerializer
-    
+
     def get_queryset(self):
         """
         Filtra clientes según parámetros de búsqueda
@@ -31,7 +31,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         queryset = Customer.objects.annotate(
             vehicles_count=Count('vehicles')
         ).select_related('created_by').prefetch_related('vehicles')
-        
+
         # Búsqueda por nombre, teléfono o email
         search = self.request.query_params.get('search', None)
         if search:
@@ -41,13 +41,19 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 Q(phone__icontains=search) |
                 Q(email__icontains=search)
             )
-        
+
         # Filtrar por estado activo/inactivo
         is_active = self.request.query_params.get('is_active', None)
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
-        
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        # Si hay parámetro de búsqueda, desactiva la paginación para mostrar todos los resultados
+        if request.query_params.get('search'):
+            self.pagination_class = None
+        return super().list(request, *args, **kwargs)
     
     def perform_create(self, serializer):
         """
@@ -95,18 +101,18 @@ class VehicleViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return VehicleDetailSerializer
         return VehicleSerializer
-    
+
     def get_queryset(self):
         """
         Filtra vehículos según parámetros de búsqueda
         """
         queryset = Vehicle.objects.select_related('customer')
-        
+
         # Búsqueda por patente específica
         plate = self.request.query_params.get('plate', None)
         if plate:
             queryset = queryset.filter(plate__icontains=plate)
-        
+
         # Búsqueda por patente, marca, modelo
         search = self.request.query_params.get('search', None)
         if search:
@@ -117,18 +123,24 @@ class VehicleViewSet(viewsets.ModelViewSet):
                 Q(customer__first_name__icontains=search) |
                 Q(customer__last_name__icontains=search)
             )
-        
+
         # Filtrar por cliente específico
         customer_id = self.request.query_params.get('customer', None)
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
-        
+
         # Filtrar por estado activo/inactivo
         is_active = self.request.query_params.get('is_active', None)
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
-        
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        # Si hay parámetro de búsqueda, desactiva la paginación para mostrar todos los resultados
+        if request.query_params.get('search'):
+            self.pagination_class = None
+        return super().list(request, *args, **kwargs)
     
     @action(detail=False, methods=['get'])
     def search_by_plate(self, request):
